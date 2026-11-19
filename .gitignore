@@ -6,6 +6,7 @@ __pycache__/
 build/
 dist/
 .eggs/
+*png
 
 # Virtual environments
 .venv/
