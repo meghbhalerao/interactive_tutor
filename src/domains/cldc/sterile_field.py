@@ -14,8 +14,31 @@ import src.domains.cldc.geometry as gm
 from src.reader import Reader
 from src.utils.mediapipe_utils import MediaPipe, PoseLandmark
 
+# rule shorthand -> index into sterile_field.is_contaminated output (shorthand is also the on-screen label)
+rule_to_idx = {"hbt": 1, "ra": 2, "tb": 3, "oib": 4}
+
+
+def draw_rules(frame_bgr, sterile_field):
+    """Overlay 'human not found', or one line per rule (red = violated, green = ok) with the number it thresholds next to it. Call after sterile_field.is_contaminated."""
+    if sterile_field.contaminations[0]:
+        cv2.putText(frame_bgr, "human not found", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
+        return
+    for row, (label, idx) in enumerate(rule_to_idx.items()):
+        violated = sterile_field.contaminations[idx]
+        text = f"{'VIOLATED' if violated else 'ok'}: {label} = {sterile_field.rule_values[idx]:+.3f}"
+        cv2.putText(frame_bgr, text, (10, 30 * (row + 1)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if violated else (0, 160, 0), 2)
+
+
+def draw_sterile_field(frame_bgr, sterile_field, reader):
+    """Overlay the outer corners you clicked (red) and the computed one-inch inner border (black)."""
+    for corners, color in ((sterile_field.out_corners_camera_coordinates, (0, 0, 255)), (sterile_field.in_corners_camera_coordinates, (0, 0, 0))):
+        px = [gm.projectPoint(p, np.eye(3), np.zeros(3), reader.new_camera_matrix).unpack() for p in corners]
+        for k in range(4):
+            cv2.line(frame_bgr, px[k], px[(k + 1) % 4], color, 1)
+
+
 class SterileField():
-    
+
     def __init__(self, color='blue') -> None:
         """ Sterile Field Parameters
 
@@ -488,19 +511,19 @@ class SterileField():
         self.contaminations = np.full((5,), False)
         self.rule_values = np.full((5,), np.nan)
 
-        if human.human_found:
-            self.contaminations[1] = is_hand_below_waistline()
-            self.contaminations[2] = is_hand_reaching_over()
-            self.contaminations[3] = is_back_turned_on_sterile_field()
-        else:
+        # index 0 = no human found; the other rules cannot be evaluated without one
+        if not human.human_found:
             self.contaminations[0] = True
             print('Human cannot be found.')
+            return self.contaminations
 
+        self.contaminations[1] = is_hand_below_waistline()
+        self.contaminations[2] = is_hand_reaching_over()
+        self.contaminations[3] = is_back_turned_on_sterile_field()
 
         if human.human_hands_found:
             self.contaminations[4] = one_inch_border_contamination()
         else:
-            self.contaminations[0] = True
             print('Human\'s hand cannot be found.')
 
         # self.contamination_dict = {"hand_or_human_found": self.contaminations[0], 

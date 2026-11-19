@@ -1,0 +1,11 @@
+The video shows a nurse performing a central line dressing change procedure. Along with this text prompt is a sequence of 21 frames (i.e. images). The 11th frame is the frame I am interested in. During the central line dressing change procedure, the human performing the procedure must comply to the following four sterility rules - 
+1. The hand of the human must not drop below the waistline or table height.
+2. The human must not turn their back to the sterile field.
+3. The human must not reach their hand across the sterile field.
+4. The human must not touch the one-inch border of the sterile field.
+The sterile field is the blue cloth placed over the table. 
+Now, according to the literature in psychometrics, a rule violation (or error) can be either of the following three categories, explained below:
+1. Mistake: The human does not know a specific sterile rule, and hence makes this error.
+2. Slip: The human knows a specific sterile rule, but makes an error due to external distractions.
+3. Lapse: The human knows a specific sterile rule, but makes an error due to forgetting that specific rule.
+The 11th frame is seen violating rule <insert rule index here>. Is the rule violation a mistake, slip or lapse? Answer and explain your reasoning based on the frames. 

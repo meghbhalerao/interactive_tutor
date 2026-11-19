@@ -16,6 +16,17 @@ import matplotlib.pyplot as plt
 import src.domains.cldc.geometry as gm
 from src.reader import Reader
 
+DEPTH_VIS_MAX = 4.0  # m; the realtime depth video maps 0..DEPTH_VIS_MAX linearly onto the colormap, farther is clipped
+
+
+def colorize_depth(depth_m):
+    """(H, W) depth in m -> (H, W, 3) BGR image, JET over 0..DEPTH_VIS_MAX; pixels with no measurement are black."""
+    gray = np.clip(depth_m / DEPTH_VIS_MAX * 255, 0, 255).astype(np.uint8)
+    out = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
+    out[depth_m <= 0] = 0
+    return out
+
+
 class PoseLandmark():
     """The 33 pose landmarks."""
     NOSE = 0
@@ -226,7 +237,7 @@ class MediaPipe():
             # Update that the human's hands were detected
             self.human_hands_found = True
 
-    def draw(self, frame):
+    def draw_skeleton(self, frame):
         """ Draw a skeleton for both human and hand pose estimation on a given frame. """
 
         # Draw a Human Pose Estimation
